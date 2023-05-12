@@ -22,10 +22,8 @@
 static bool shell_cd(word_t *dir)
 {
 	/* TODO: Execute cd. */
-	if (chdir(dir->string) == -1) {
+	if (chdir(dir->string) == -1)
 		return false;
-	}
-
 	return true;
 }
 
@@ -51,21 +49,15 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 
 	/* TODO: If builtin command, execute the command. */
 	if (strcmp(s->verb->string, "exit") == 0 || strcmp(s->verb->string, "quit") == 0) {
-		if (s->params != NULL) {
-			fprintf(stderr, "[exit/quit]: Too many arguments\n");
-			return 1;
-		}
-
+		DIE(s->params, "exit: Too many arguments\n");
 		return shell_exit();
 	}
 
 	if (strcmp(s->verb->string, "cd") == 0) {
-		if (s->params == NULL) {
-			fprintf(stderr, "[cd]: Too few arguments\n");
-			return 1;
-		}
+		DIE(!s->params, "cd: Missing argument\n");
 
-		shell_cd(s->params);
+		// [TODO]: Work more on `cd`
+		int ret = shell_cd(s->params);
 		// Write output to `s->out`
 		if (s->out != NULL) {
 			int stdout_cpy = dup(STDOUT_FILENO);
@@ -73,10 +65,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			// [TODO]: `cd .. > out.txt` should create a `out.txt` file in the old directory
 			// 							 and not in the new one (the one we `cd` into) 
 			int fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-			if (fd == -1) {
-				fprintf(stderr, "[open]: %s: No such file or directory\n", s->out->string);
-				return 1;
-			}
+			DIE(fd == -1, "open");
 			dup2(fd, STDOUT_FILENO);
 			close(fd);
 
@@ -85,6 +74,8 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			close(stdout_cpy);
 		}
 
+		if (ret)
+			return 0;
 		return 1;
 	}
 
@@ -120,10 +111,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			// Child process
 			if (s->in != NULL) {
 				fd = open(s->in->string, O_RDONLY);
-				if (fd == -1) {
-					fprintf(stderr, "[open]: %s: No such file or directory\n", s->in->string);
-					exit(1);
-				}
+				DIE(fd == -1, "open");
 				dup2(fd, STDIN_FILENO);
 				close(fd);
 			}
@@ -136,10 +124,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				else
 					out_flags |= O_TRUNC;
 				fd = open(s->out->string, out_flags, 0644);
-				if (fd == -1) {
-					fprintf(stderr, "[open]: %s: No such file or directory\n", s->out->string);
-					exit(1);
-				}
+				DIE(fd == -1, "open");
 				dup2(fd, STDOUT_FILENO);
 				dup2(fd, STDERR_FILENO);
 				close(fd);
@@ -152,10 +137,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 					out_flags |= O_TRUNC;
 				if (s->out != NULL) {
 					fd = open(s->out->string, out_flags, 0644);
-					if (fd == -1) {
-						fprintf(stderr, "[open]: %s: No such file or directory\n", s->out->string);
-						exit(1);
-					}
+					DIE(fd == -1, "open");
 					dup2(fd, STDOUT_FILENO);
 					close(fd);
 				}
@@ -168,19 +150,12 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 					err_flags |= O_TRUNC;
 				if (s->err != NULL) {
 					fd = open(s->err->string, err_flags, 0644);
-					if (fd == -1) {
-						fprintf(stderr, "[open]: %s: No such file or directory\n", s->err->string);
-						exit(1);
-					}
+					DIE(fd == -1, "open");
 					dup2(fd, STDERR_FILENO);
 					close(fd);
 				}
 			}
 
-			// fprintf(stderr, "Executing command: %s\n", command);
-			// for (int i = 0; i < argc; i++) {
-				// fprintf(stderr, "Arg %d: %s\n", i, argv[i]);
-			// }
 			execvp(command, argv);
 			DIE(1, "execvp");
 			break;
@@ -237,6 +212,8 @@ int parse_command(command_t *c, int level, command_t *father)
 	switch (c->op) {
 		case OP_SEQUENTIAL:
 			/* TODO: Execute the commands one after the other. */
+			parse_command(c->cmd1, level + 1, c);
+			parse_command(c->cmd2, level + 1, c);
 			break;
 
 		case OP_PARALLEL:
@@ -245,14 +222,18 @@ int parse_command(command_t *c, int level, command_t *father)
 
 		case OP_CONDITIONAL_NZERO:
 			/* TODO: Execute the second command only if the first one
-			* returns non zero.
+			* returns non zero. (||)
 			*/
+			if (parse_command(c->cmd1, level + 1, c) != 0)
+				parse_command(c->cmd2, level + 1, c);
 			break;
 
 		case OP_CONDITIONAL_ZERO:
 			/* TODO: Execute the second command only if the first one
-			* returns zero.
+			* returns zero. (&&)
 			*/
+			if (parse_command(c->cmd1, level + 1, c) == 0)
+				parse_command(c->cmd2, level + 1, c);
 			break;
 
 		case OP_PIPE:

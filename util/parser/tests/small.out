@@ -1,16 +1,35 @@
-> cd /new/york/san/francisco > out-err.txt
+> cd _x_y_z_/_a_b_c_ && echo "test" > out_zero3.txt
 Command successfully read!
 command_t (
-    scmd (
-        simple_command_t (
-            verb (
-                'cd'
+    op == OP_CONDITIONAL_ZERO
+    cmd1 (
+        command_t (
+            scmd (
+                simple_command_t (
+                    verb (
+                        'cd'
+                    )
+                    params (
+                        '_x_y_z_/_a_b_c_'
+                    )
+                )
             )
-            params (
-                '/new/york/san/francisco'
-            )
-            out (
-                'out-err.txt'
+        )
+    )
+    cmd2 (
+        command_t (
+            scmd (
+                simple_command_t (
+                    verb (
+                        'echo'
+                    )
+                    params (
+                        'test'
+                    )
+                    out (
+                        'out_zero3.txt'
+                    )
+                )
             )
         )
     )
