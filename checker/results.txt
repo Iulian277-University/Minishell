@@ -1,11 +1,4 @@
 
 00) Sources check...........................................passed  [10/100]
-01) Testing commands without arguments......................failed  [ 0/100]
+01) Testing commands without arguments......................passed  [03/100]
 02) Testing commands with arguments.........................failed  [ 0/100]
-03) Testing simple redirect operators.......................failed  [ 0/100]
-04) Testing append redirect operators.......................failed  [ 0/100]
-05) Testing current directory...............................failed  [ 0/100]
-06) Testing conditional operators...........................failed  [ 0/100]
-07) Testing sequential commands.............................failed  [ 0/100]
-08) Testing environment variables...........................failed  [ 0/100]
-09) Testing single pipe.....................................failed  [ 0/100]
