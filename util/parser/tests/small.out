@@ -1,35 +1,16 @@
-> touch a.txt
+> cd /new/york/san/francisco > out-err.txt
 Command successfully read!
 command_t (
     scmd (
         simple_command_t (
             verb (
-                'touch'
+                'cd'
             )
             params (
-                'a.txt'
-            )
-        )
-    )
-)
-
-
-> echo "abc" &> a.txt
-Command successfully read!
-command_t (
-    scmd (
-        simple_command_t (
-            verb (
-                'echo'
-            )
-            params (
-                'abc'
+                '/new/york/san/francisco'
             )
             out (
-                'a.txt'
-            )
-            err (
-                'a.txt'
+                'out-err.txt'
             )
         )
     )

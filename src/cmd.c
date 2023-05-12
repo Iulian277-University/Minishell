@@ -23,7 +23,6 @@ static bool shell_cd(word_t *dir)
 {
 	/* TODO: Execute cd. */
 	if (chdir(dir->string) == -1) {
-		fprintf(stderr, "[cd]: %s: No such file or directory\n", dir->string);
 		return false;
 	}
 
@@ -66,7 +65,27 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			return 1;
 		}
 
-		return shell_cd(s->params);
+		shell_cd(s->params);
+		// Write output to `s->out`
+		if (s->out != NULL) {
+			int stdout_cpy = dup(STDOUT_FILENO);
+
+			// [TODO]: `cd .. > out.txt` should create a `out.txt` file in the old directory
+			// 							 and not in the new one (the one we `cd` into) 
+			int fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			if (fd == -1) {
+				fprintf(stderr, "[open]: %s: No such file or directory\n", s->out->string);
+				return 1;
+			}
+			dup2(fd, STDOUT_FILENO);
+			close(fd);
+
+			// Restore `stdout`
+			dup2(stdout_cpy, STDOUT_FILENO);
+			close(stdout_cpy);
+		}
+
+		return 1;
 	}
 
 	/* TODO: If variable assignment, execute the assignment and return
@@ -163,8 +182,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				// fprintf(stderr, "Arg %d: %s\n", i, argv[i]);
 			// }
 			execvp(command, argv);
-			fprintf(stderr, "[execvp]: %s: Unknown command\n", s->verb->string);
-			exit(1);
+			DIE(1, "execvp");
 			break;
 		default:
 			// Parent process
