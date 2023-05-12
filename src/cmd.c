@@ -71,7 +71,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 
 	/* TODO: If variable assignment, execute the assignment and return
 	 * the exit status.
-	 */
+	*/
 
 	/* TODO: If external command:
 	 *   1. Fork new process
@@ -79,8 +79,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	 *     3c. Load executable in child
 	 *   2. Wait for child
 	 *   3. Return exit status
-	 */
-
+	*/
 	// Extract command and arguments
 	int argc;
 	char *command = get_word(s->verb);
@@ -88,6 +87,9 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 
 	int fd;
 	int status;
+
+	int out_flags = 0;
+	int err_flags = 0;
 
 	pid_t pid = fork();
 	switch (pid) {
@@ -107,29 +109,61 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				close(fd);
 			}
 
-			if (s->out != NULL) {
-				fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			// If `s->out` and `s->err` are the same: command &> file
+			if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
+				out_flags = O_WRONLY | O_CREAT;
+				if (s->io_flags & IO_OUT_APPEND)
+					out_flags |= O_APPEND;
+				else
+					out_flags |= O_TRUNC;
+				fd = open(s->out->string, out_flags, 0644);
 				if (fd == -1) {
 					fprintf(stderr, "[open]: %s: No such file or directory\n", s->out->string);
 					exit(1);
 				}
 				dup2(fd, STDOUT_FILENO);
-				close(fd);
-			}
-
-			if (s->err != NULL) {
-				fd = open(s->err->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-				if (fd == -1) {
-					fprintf(stderr, "[open]: %s: No such file or directory\n", s->err->string);
-					exit(1);
-				}
 				dup2(fd, STDERR_FILENO);
 				close(fd);
+			} else { // Different redirections for `stdout` and `stderr`
+				// Set `stdout`
+				out_flags = O_WRONLY | O_CREAT;
+				if (s->io_flags & IO_OUT_APPEND)
+					out_flags |= O_APPEND;
+				else
+					out_flags |= O_TRUNC;
+				if (s->out != NULL) {
+					fd = open(s->out->string, out_flags, 0644);
+					if (fd == -1) {
+						fprintf(stderr, "[open]: %s: No such file or directory\n", s->out->string);
+						exit(1);
+					}
+					dup2(fd, STDOUT_FILENO);
+					close(fd);
+				}
+
+				// Set `stderr`
+				err_flags = O_WRONLY | O_CREAT;
+				if (s->io_flags & IO_ERR_APPEND)
+					err_flags |= O_APPEND;
+				else
+					err_flags |= O_TRUNC;
+				if (s->err != NULL) {
+					fd = open(s->err->string, err_flags, 0644);
+					if (fd == -1) {
+						fprintf(stderr, "[open]: %s: No such file or directory\n", s->err->string);
+						exit(1);
+					}
+					dup2(fd, STDERR_FILENO);
+					close(fd);
+				}
 			}
 
+			// fprintf(stderr, "Executing command: %s\n", command);
+			// for (int i = 0; i < argc; i++) {
+				// fprintf(stderr, "Arg %d: %s\n", i, argv[i]);
+			// }
 			execvp(command, argv);
-			// execvp(s->verb->string, (char *const *)s->params);
-			fprintf(stderr, "[execvp]: %s: No such file or directory\n", s->verb->string);
+			fprintf(stderr, "[execvp]: %s: Unknown command\n", s->verb->string);
 			exit(1);
 			break;
 		default:

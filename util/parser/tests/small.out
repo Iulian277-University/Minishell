@@ -1,0 +1,39 @@
+> touch a.txt
+Command successfully read!
+command_t (
+    scmd (
+        simple_command_t (
+            verb (
+                'touch'
+            )
+            params (
+                'a.txt'
+            )
+        )
+    )
+)
+
+
+> echo "abc" &> a.txt
+Command successfully read!
+command_t (
+    scmd (
+        simple_command_t (
+            verb (
+                'echo'
+            )
+            params (
+                'abc'
+            )
+            out (
+                'a.txt'
+            )
+            err (
+                'a.txt'
+            )
+        )
+    )
+)
+
+
+> End of file!
