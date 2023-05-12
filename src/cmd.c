@@ -80,7 +80,12 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	 *   2. Wait for child
 	 *   3. Return exit status
 	 */
-	
+
+	// Extract command and arguments
+	int argc;
+	char *command = get_word(s->verb);
+	char **argv = get_argv(s, &argc);
+
 	int fd;
 	int status;
 
@@ -122,7 +127,8 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				close(fd);
 			}
 
-			execvp(s->verb->string, (char *const *)s->params);
+			execvp(command, argv);
+			// execvp(s->verb->string, (char *const *)s->params);
 			fprintf(stderr, "[execvp]: %s: No such file or directory\n", s->verb->string);
 			exit(1);
 			break;
