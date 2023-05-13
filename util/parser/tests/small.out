@@ -1,4 +1,4 @@
-> myNew='SUCCESS'; echo $myVariable >> output0; echo $myNew >> output0
+> pwd > 0$UNU.txt; cd ./subdir; pwd > ../02.txt
 Command successfully read!
 command_t (
     op == OP_SEQUENTIAL
@@ -10,7 +10,10 @@ command_t (
                     scmd (
                         simple_command_t (
                             verb (
-                                'myNew';    '=';    'SUCCESS'
+                                'pwd'
+                            )
+                            out (
+                                '0';    expand('UNU');    '.txt'
                             )
                         )
                     )
@@ -21,14 +24,10 @@ command_t (
                     scmd (
                         simple_command_t (
                             verb (
-                                'echo'
+                                'cd'
                             )
                             params (
-                                expand('myVariable')
-                            )
-                            out (
-                                'output0'
-                                APPEND
+                                './subdir'
                             )
                         )
                     )
@@ -41,14 +40,10 @@ command_t (
             scmd (
                 simple_command_t (
                     verb (
-                        'echo'
-                    )
-                    params (
-                        expand('myNew')
+                        'pwd'
                     )
                     out (
-                        'output0'
-                        APPEND
+                        '../02.txt'
                     )
                 )
             )

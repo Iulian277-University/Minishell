@@ -1,1 +1,1 @@
-myNew='SUCCESS'; echo $myVariable >> output0; echo $myNew >> output0
+pwd > 0$UNU.txt; cd ./subdir; pwd > ../02.txt

@@ -82,7 +82,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	*/
 	if (s->verb != NULL && s->params == NULL && strchr(get_word(s->verb), '=') != NULL) {
 		// Get the variable name and value
-		char *var_name = s->verb->string;
+		const char *var_name = s->verb->string;
 		char *var_value = NULL;
 
 		// Check if there is a value assigned to the variable
@@ -103,10 +103,18 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	 *   2. Wait for child
 	 *   3. Return exit status
 	*/
+
 	// Extract command and arguments
 	int argc;
 	char *command = get_word(s->verb);
 	char **argv = get_argv(s, &argc);
+
+	// Extract redirections
+	char *out_redir = NULL, *err_redir = NULL;
+	if (s->out != NULL)
+		out_redir = get_word(s->out);
+	if (s->err != NULL)
+		err_redir = get_word(s->err);
 
 	int fd;
 	int status;
@@ -130,13 +138,13 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			}
 
 			// If `s->out` and `s->err` are the same: "command &> file"
-			if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
+			if (s->out != NULL && s->err != NULL && strcmp(out_redir, err_redir) == 0) {
 				out_flags = O_WRONLY | O_CREAT;
 				if (s->io_flags & IO_OUT_APPEND)
 					out_flags |= O_APPEND;
 				else
 					out_flags |= O_TRUNC;
-				fd = open(s->out->string, out_flags, 0644);
+				fd = open(out_redir, out_flags, 0644);
 				DIE(fd == -1, "open");
 				dup2(fd, STDOUT_FILENO);
 				dup2(fd, STDERR_FILENO);
@@ -149,7 +157,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				else
 					out_flags |= O_TRUNC;
 				if (s->out != NULL) {
-					fd = open(s->out->string, out_flags, 0644);
+					fd = open(out_redir, out_flags, 0644);
 					DIE(fd == -1, "open");
 					dup2(fd, STDOUT_FILENO);
 					close(fd);
@@ -162,7 +170,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				else
 					err_flags |= O_TRUNC;
 				if (s->err != NULL) {
-					fd = open(s->err->string, err_flags, 0644);
+					fd = open(err_redir, err_flags, 0644);
 					DIE(fd == -1, "open");
 					dup2(fd, STDERR_FILENO);
 					close(fd);
