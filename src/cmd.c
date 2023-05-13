@@ -179,7 +179,8 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 
 			// Execute the `command` with `argv`
 			execvp(command, argv);
-			DIE(1, "execvp");
+			fprintf(stderr, "Execution failed for '%s'\n", command);
+			exit(EXIT_FAILURE);
 			break;
 		default:
 			// Parent process
@@ -197,12 +198,48 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 /**
  * Process two commands in parallel, by creating two children.
  */
-static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level,
-		command_t *father)
+static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level, command_t *father)
 {
 	/* TODO: Execute cmd1 and cmd2 simultaneously. */
+	pid_t pid1, pid2;
+	int status1, status2;
 
-	return true; /* TODO: Replace with actual exit status. */
+	pid1 = fork();
+	switch (pid1) {
+		case -1:
+			// Error
+			DIE(1, "fork");
+			break;
+		case 0:
+			// Child process 1
+			exit(parse_command(cmd1, level + 1, father));
+			break;
+		default:
+			// Parent process
+			pid2 = fork();
+			switch (pid2) {
+				case -1:
+					// Error
+					DIE(1, "fork");
+					break;
+				case 0:
+					// Child process 2
+					exit(parse_command(cmd2, level + 1, father));
+					break;
+				default:
+					// Parent process
+					waitpid(pid1, &status1, 0);
+					waitpid(pid2, &status2, 0);
+					if (WIFEXITED(status1) && WIFEXITED(status2)) {
+						return WEXITSTATUS(status1) && WEXITSTATUS(status2);
+					}
+					return 1;
+					break;
+			}
+			break;
+	}
+
+	return 0;
 }
 
 
@@ -298,6 +335,7 @@ int parse_command(command_t *c, int level, command_t *father)
 
 		case OP_PARALLEL:
 			/* TODO: Execute the commands simultaneously. */
+			return run_in_parallel(c->cmd1, c->cmd2, level, c);
 			break;
 
 		case OP_CONDITIONAL_NZERO:
