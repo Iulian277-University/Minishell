@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,16 +55,12 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	}
 
 	if (strcmp(s->verb->string, "cd") == 0) {
-		DIE(!s->params, "cd: Missing argument\n");
+		if (!s->params)
+			return 0;
 
-		// [TODO]: Work more on `cd`
-		int ret = shell_cd(s->params);
 		// Write output to `s->out`
 		if (s->out != NULL) {
 			int stdout_cpy = dup(STDOUT_FILENO);
-
-			// [TODO]: `cd .. > out.txt` should create a `out.txt` file in the old directory
-			// 							 and not in the new one (the one we `cd` into) 
 			int fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 			DIE(fd == -1, "open");
 			dup2(fd, STDOUT_FILENO);
@@ -74,7 +71,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			close(stdout_cpy);
 		}
 
-		if (ret)
+		if (shell_cd(s->params))
 			return 0;
 		return 1;
 	}
