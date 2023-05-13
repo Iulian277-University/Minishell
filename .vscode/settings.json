@@ -38,6 +38,7 @@
         "typeinfo": "c",
         "utility": "c",
         "bit": "c",
-        "map": "c"
+        "map": "c",
+        "parser.h": "c"
     }
 }

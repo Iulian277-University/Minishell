@@ -205,15 +205,73 @@ static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level,
 	return true; /* TODO: Replace with actual exit status. */
 }
 
+
 /**
  * Run commands by creating an anonymous pipe (cmd1 | cmd2).
  */
-static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
-		command_t *father)
+static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level, command_t *father)
 {
 	/* TODO: Redirect the output of cmd1 to the input of cmd2. */
+	int pipefd[2];
+	pid_t pid1, pid2;
+	int status1, status2;
+	bool success = false;
 
-	return true; /* TODO: Replace with actual exit status. */
+	if (pipe(pipefd) == -1)
+		DIE(1, "pipe");
+		
+	pid1 = fork();
+	switch (pid1)
+	{
+		case -1:
+			// Error
+			DIE(1, "fork");
+			break;
+		case 0:
+			// Child process 1
+			close(pipefd[READ]);
+			dup2(pipefd[WRITE], STDOUT_FILENO);
+			close(pipefd[WRITE]);
+			success = parse_command(cmd1, level + 1, father);
+			exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
+			break;
+		default:
+			// Parent process
+			pid2 = fork();
+			switch (pid2)
+			{
+				case -1:
+					// Error
+					DIE(1, "fork");
+					break;
+				case 0:
+					// Child process 2
+					close(pipefd[WRITE]);
+					dup2(pipefd[READ], STDIN_FILENO);
+					close(pipefd[READ]);
+					success = parse_command(cmd2, level + 1, father);
+					exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
+					break;
+				default:
+					// Parent process
+					close(pipefd[READ]);
+					close(pipefd[WRITE]);
+					
+					waitpid(pid1, &status1, 0);
+					if (!WIFEXITED(status1) || !WEXITSTATUS(status1))
+						success = false;
+
+					waitpid(pid2, &status2, 0);
+					if (!WIFEXITED(status2) || !WEXITSTATUS(status2))
+						success = false;
+
+					return success;
+					break;
+			}
+			break;
+	}
+
+	return success;
 }
 
 /**
@@ -235,7 +293,7 @@ int parse_command(command_t *c, int level, command_t *father)
 		case OP_SEQUENTIAL:
 			/* TODO: Execute the commands one after the other. */
 			parse_command(c->cmd1, level + 1, c);
-			parse_command(c->cmd2, level + 1, c);
+			return parse_command(c->cmd2, level + 1, c);
 			break;
 
 		case OP_PARALLEL:
@@ -247,8 +305,8 @@ int parse_command(command_t *c, int level, command_t *father)
 			* returns non zero. (||)
 			*/
 			if (parse_command(c->cmd1, level + 1, c) != 0)
-				parse_command(c->cmd2, level + 1, c);
-			return 1;
+				return parse_command(c->cmd2, level + 1, c);
+			return 0;
 			break;
 
 		case OP_CONDITIONAL_ZERO:
@@ -256,14 +314,15 @@ int parse_command(command_t *c, int level, command_t *father)
 			* returns zero. (&&)
 			*/
 			if (parse_command(c->cmd1, level + 1, c) == 0)
-				parse_command(c->cmd2, level + 1, c);
-			return 1;
+				return parse_command(c->cmd2, level + 1, c);
+			return 0;
 			break;
 
 		case OP_PIPE:
 			/* TODO: Redirect the output of the first command to the
 			* input of the second.
 			*/
+			return run_on_pipe(c->cmd1, c->cmd2, level, father);
 			break;
 
 		default:
