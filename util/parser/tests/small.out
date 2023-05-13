@@ -1,16 +1,35 @@
-> cd _x_y_z_/_a_b_c_ && echo "test" > out_zero3.txt
+> echo "alfa" > out_par2.txt && false || uname >> out_par2.txt
 Command successfully read!
 command_t (
-    op == OP_CONDITIONAL_ZERO
+    op == OP_CONDITIONAL_NZERO
     cmd1 (
         command_t (
-            scmd (
-                simple_command_t (
-                    verb (
-                        'cd'
+            op == OP_CONDITIONAL_ZERO
+            cmd1 (
+                command_t (
+                    scmd (
+                        simple_command_t (
+                            verb (
+                                'echo'
+                            )
+                            params (
+                                'alfa'
+                            )
+                            out (
+                                'out_par2.txt'
+                            )
+                        )
                     )
-                    params (
-                        '_x_y_z_/_a_b_c_'
+                )
+            )
+            cmd2 (
+                command_t (
+                    scmd (
+                        simple_command_t (
+                            verb (
+                                'false'
+                            )
+                        )
                     )
                 )
             )
@@ -21,13 +40,11 @@ command_t (
             scmd (
                 simple_command_t (
                     verb (
-                        'echo'
-                    )
-                    params (
-                        'test'
+                        'uname'
                     )
                     out (
-                        'out_zero3.txt'
+                        'out_par2.txt'
+                        APPEND
                     )
                 )
             )

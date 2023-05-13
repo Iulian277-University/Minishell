@@ -71,6 +71,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			close(stdout_cpy);
 		}
 
+		// Perform the `cd` command
 		if (shell_cd(s->params))
 			return 0;
 		return 1;
@@ -113,7 +114,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				close(fd);
 			}
 
-			// If `s->out` and `s->err` are the same: command &> file
+			// If `s->out` and `s->err` are the same: "command &> file"
 			if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
 				out_flags = O_WRONLY | O_CREAT;
 				if (s->io_flags & IO_OUT_APPEND)
@@ -153,6 +154,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 				}
 			}
 
+			// Execute the `command` with `argv`
 			execvp(command, argv);
 			DIE(1, "execvp");
 			break;
@@ -223,6 +225,7 @@ int parse_command(command_t *c, int level, command_t *father)
 			*/
 			if (parse_command(c->cmd1, level + 1, c) != 0)
 				parse_command(c->cmd2, level + 1, c);
+			return 1;
 			break;
 
 		case OP_CONDITIONAL_ZERO:
@@ -231,6 +234,7 @@ int parse_command(command_t *c, int level, command_t *father)
 			*/
 			if (parse_command(c->cmd1, level + 1, c) == 0)
 				parse_command(c->cmd2, level + 1, c);
+			return 1;
 			break;
 
 		case OP_PIPE:

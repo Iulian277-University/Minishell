@@ -6,7 +6,5 @@
 04) Testing append redirect operators.......................passed  [05/100]
 05) Testing current directory...............................passed  [05/100]
 06) Testing conditional operators...........................passed  [05/100]
-07) Testing sequential commands.............................failed  [ 0/100]
+07) Testing sequential commands.............................passed  [03/100]
 08) Testing environment variables...........................failed  [ 0/100]
-09) Testing single pipe.....................................failed  [ 0/100]
-10) Testing multiple pipes..................................failed  [ 0/100]
