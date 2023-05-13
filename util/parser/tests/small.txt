@@ -1,1 +1,1 @@
-echo "alfa" > out_par2.txt && false || uname >> out_par2.txt
+myNew='SUCCESS'; echo $myVariable >> output0; echo $myNew >> output0

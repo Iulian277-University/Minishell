@@ -80,6 +80,21 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	/* TODO: If variable assignment, execute the assignment and return
 	 * the exit status.
 	*/
+	if (s->verb != NULL && s->params == NULL && strchr(get_word(s->verb), '=') != NULL) {
+		// Get the variable name and value
+		char *var_name = s->verb->string;
+		char *var_value = NULL;
+
+		// Check if there is a value assigned to the variable
+		if (s->verb->next_part != NULL && s->verb->next_part->next_part != NULL)
+			var_value = get_word(s->verb->next_part->next_part);
+
+		// Set the variable `var_name` to the `var_value` value
+		// fprintf(stderr, "Setting variable %s to %s\n", var_name, var_value);
+		setenv(var_name, var_value, 1);
+
+		return 0;
+	}
 
 	/* TODO: If external command:
 	 *   1. Fork new process

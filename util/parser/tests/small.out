@@ -1,22 +1,16 @@
-> echo "alfa" > out_par2.txt && false || uname >> out_par2.txt
+> myNew='SUCCESS'; echo $myVariable >> output0; echo $myNew >> output0
 Command successfully read!
 command_t (
-    op == OP_CONDITIONAL_NZERO
+    op == OP_SEQUENTIAL
     cmd1 (
         command_t (
-            op == OP_CONDITIONAL_ZERO
+            op == OP_SEQUENTIAL
             cmd1 (
                 command_t (
                     scmd (
                         simple_command_t (
                             verb (
-                                'echo'
-                            )
-                            params (
-                                'alfa'
-                            )
-                            out (
-                                'out_par2.txt'
+                                'myNew';    '=';    'SUCCESS'
                             )
                         )
                     )
@@ -27,7 +21,14 @@ command_t (
                     scmd (
                         simple_command_t (
                             verb (
-                                'false'
+                                'echo'
+                            )
+                            params (
+                                expand('myVariable')
+                            )
+                            out (
+                                'output0'
+                                APPEND
                             )
                         )
                     )
@@ -40,10 +41,13 @@ command_t (
             scmd (
                 simple_command_t (
                     verb (
-                        'uname'
+                        'echo'
+                    )
+                    params (
+                        expand('myNew')
                     )
                     out (
-                        'out_par2.txt'
+                        'output0'
                         APPEND
                     )
                 )
