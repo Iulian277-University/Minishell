@@ -7,7 +7,6 @@
 
 #define PIPE_READ	0
 #define PIPE_WRITE	1
-#define BUFSIZE 	128
 
 /* Useful macro for handling error codes. */
 #define DIE(assertion, call_description)			\

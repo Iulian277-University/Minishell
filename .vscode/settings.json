@@ -39,6 +39,7 @@
         "utility": "c",
         "bit": "c",
         "map": "c",
-        "parser.h": "c"
+        "parser.h": "c",
+        "stdlib.h": "c"
     }
 }
